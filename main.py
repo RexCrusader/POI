@@ -1,16 +1,18 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from scipy.stats import norm
+from csv import writer
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+distribution_x = norm(loc=0, scale=100)
+distribution_y = norm(loc=0, scale=100)
+distribution_z = norm(loc=0.2, scale=0.05)
 
+num_points = 1000
+x = distribution_x.rvs(size=num_points)
+y = distribution_y.rvs(size=num_points)
+z = distribution_z.rvs(size=num_points)
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('testowanko')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+points = zip(x, y, z)
+with open('Lab1DataPozioma.xyz', 'w', encoding='utf-8', newline='\n') as csvfile:
+    csvwriter = writer(csvfile)
+    for p in points:
+        csvwriter.writerow(p)
