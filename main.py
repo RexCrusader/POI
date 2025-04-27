@@ -1,6 +1,9 @@
 from scipy.stats import norm
 from csv import writer
 import numpy as np
+import random
+from sklearn.cluster import KMeans
+from scipy.spatial.distance import cdist
 
 def generacja_pozioma(liczba_punktow):
     dystrybucja_x = norm(loc=0, scale=20)
@@ -48,6 +51,19 @@ def generacja_cylidryczna(liczba_punktow):
         for p in punkty:
             csvwriter.writerow(p)
 
-generacja_pozioma(2000)
-generacja_pionowa(2000)
-generacja_cylidryczna(2000)
+
+def wczytaj_punkty(plik):
+    punkty = []
+    with open(plik, 'r', encoding='utf-8') as file:
+        for line in file:
+            x, y, z = map(float, line.strip().split(','))
+            punkty.append((x, y, z))
+    return np.array(punkty)
+
+
+
+
+#generacja_pozioma(2000)
+#generacja_pionowa(2000)
+#generacja_cylidryczna(2000)
+
