@@ -1,41 +1,58 @@
-from scipy.stats import norm
-from csv import writer
-import numpy as np
-import random
-from sklearn.cluster import KMeans
-from pyransac3d import Plane
 import os
 import cv2
+import numpy as np
+import pandas as pd
+from skimage.feature import graycomatrix, graycoprops
 
-def process_textures(input_dir, output_dir):
-    numer_obrazu = 1
+def reduce_gray_levels(obraz, levels=64):
+    factor = 256 // levels
+    return (obraz // factor).astype(np.uint8)
 
-    for filename in os.listdir(input_dir):
-        if filename.lower().endswith('.jpg'):
-            image_path = os.path.join(input_dir, filename)
-            img = cv2.imread(image_path)
+def extract_features(image, distances, angles, levels=64):
+    glcm = graycomatrix(image,
+                        distances=distances,
+                        angles=angles,
+                        levels=levels,
+                        symmetric=True,
+                        normed=True)
 
+    features = {}
+    props = ['dissimilarity', 'correlation', 'contrast', 'energy', 'homogeneity', 'ASM']
+    for prop in props:
+        result = graycoprops(glcm, prop)
+        for i, d in enumerate(distances):
+            for j, a in enumerate(angles):
+                angle_deg = int(np.rad2deg(a))
+                features[f"{prop}_d{d}_a{angle_deg}"] = result[i, j]
+
+    return features
+
+def process_category(category_folder, label):
+    data = []
+    for filename in os.listdir(category_folder):
+        if filename.lower().endswith('.png'):
+            img_path = os.path.join(category_folder, filename)
+            img = cv2.imread(img_path)
             if img is None:
-                print(f"Nie udało się wczytać obrazu: {filename}")
                 continue
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            gray_reduced = reduce_gray_levels(gray, levels=64)
 
-            height, width, _ = img.shape
-            probka_height = 128
-            probka_width = 128
+            features = extract_features(
+                gray_reduced,
+                distances=[1, 3, 5],
+                angles=[0, np.pi/4, np.pi/2, 3*np.pi/4],
+                levels=64
+            )
+            features['label'] = label
+            data.append(features)
+    return data
 
+all_data = []
+all_data += process_category("FloorProcesed", "Floor")
+all_data += process_category("WallProcesed", "Wall")
+all_data += process_category("FurnitureProcesed", "Furniture")
 
-            for y in range(0, height - probka_height + 1, probka_height):
-                for x in range(0, width - probka_width + 1, probka_width):
-                    wycinek = img[y:y + probka_height, x:x + probka_width]
-                    wycinek_filename = os.path.join(output_dir, f"{numer_obrazu}.png")
-                    cv2.imwrite(wycinek_filename, wycinek)
-                    numer_obrazu += 1
-
-kategorie = {
-    'Floor': 'FloorProcesed',
-    'Wall': 'WallProcesed',
-    'Furniture': 'FurnitureProcesed',
-}
-
-for input_folder, output_folder in kategorie.items():
-    process_textures(input_dir=input_folder, output_dir=output_folder)
+df = pd.DataFrame(all_data)
+df.to_csv("cechy_tekstur.csv", index=False)
+print("Zapisano cechy do pliku cechy_tekstur.csv")
