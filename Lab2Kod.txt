@@ -138,7 +138,7 @@ def analiza_chmur(chmury, prog_płaszczyzny):
 #generacja_pionowa(2000)
 #generacja_cylidryczna(2000)
 
-
+'''
 punkty_poziome = wczytaj_punkty('Lab1DataPozioma.xyz')
 punkty_pionowe = wczytaj_punkty('Lab1DataPionowa.xyz')
 punkty_cylinder = wczytaj_punkty('Lab1DataCylider.xyz')
@@ -156,5 +156,5 @@ print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 print("Analiza chmur dla wygenerowaniej chmury cylindrycznej: ")
 analiza_chmur(klastry_cylinder,0.05)
 print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-
+'''
 
