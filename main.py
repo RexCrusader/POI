@@ -4,41 +4,46 @@ from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from sklearn.decomposition import PCA
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.models import Sequential, model_from_json
+from tensorflow.keras.layers import Dense
+from keras import Sequential
+from keras.layers import Dense
 
 import matplotlib.pyplot as plt
 
-features = pd.read_csv('cechy_tekstur.csv', sep=',')
+df = pd.read_csv('cechy_tekstur.csv', sep=',')
 
-data =np.array(features)
-X = (data[:,:-1]).astype('float64')
-Y = data [:,-1]
+data = df.to_numpy()
 
-x_transform = PCA(n_components=3)
+X = data[:,:-1].astype('float')
+y = data[:,-1]
 
-Xt = x_transform.fit_transform(X)
+label_encoder= LabelEncoder()
+integer_encoded = label_encoder.fit_transform(y)
 
-red = Y == 'Floor'
-blue = Y == 'Wall'
-cyan = Y == 'Furniture'
+onehot_encoder = OneHotEncoder(sparse_output=False)
+integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
+onehot_encoder = onehot_encoder.fit_transform(integer_encoded)
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(Xt[red, 0], Xt[red, 1], Xt[red, 2], c="r")
-ax.scatter(Xt[blue, 0], Xt[blue, 1], Xt[blue, 2], c="b")
-ax.scatter(Xt[cyan, 0], Xt[cyan, 1], Xt[cyan, 2], c="c")
+X_train, X_test, y_train, y_test = train_test_split(X, onehot_encoder, test_size=0.3)
 
-classifier = svm.SVC(gamma='auto')
+model = Sequential()
+model.add(Dense(10, input_dim=72, activation='sigmoid'))
+model.add(Dense(3, activation='softmax'))
 
-x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0.33)
+model.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
 
-classifier.fit(x_train, y_train)
-y_pred = classifier.predict(x_test)
-acc = accuracy_score(y_test, y_pred)
-print(acc)
+model.summary()
 
-cm = confusion_matrix(y_test, y_pred, normalize='true')
+model.fit(X_train, y_train, epochs=100, batch_size=10, shuffle=True)
 
+y_pred = model.predict(X_test)
+y_pred_int = np.argmax(y_pred, axis=1)
+y_test_int = np.argmax(y_test, axis=1)
+cm = confusion_matrix(y_test_int, y_pred_int)
 print(cm)
 plt.matshow(cm, cmap='Blues')
 plt.colorbar()
